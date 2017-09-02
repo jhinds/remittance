@@ -17,27 +17,30 @@ contract('Remittance', (accounts) => {
     });
   });
 
-  it("should allow owner to get funds back after a deadline", function() {
+  it("should allow owner to get funds back after a deadline", () => {
 
   });
 
-  it("should not allow a deadline to go past a certain period", function() {
+  it("should not allow a deadline to go past a certain period", () => {
 
   });
 
-  it("should be able to be killed", function(){
+  it("should be able to be killed", () => {
 
   });
 
-  it("should not be able to get funds without being unlocked with password", function() {
+  it("should not be able to get funds without being unlocked with password", () => {
 
   });
 
-  it("should allow the exhange to be able to convert the funds and send them elsewhere minus a cut", function() {
-    return contract.sendToExchange("abc", 123, 10, {from: owner});
+  it("should allow the exhange to be able to convert the funds and send them elsewhere minus a cut", () => {
+    return contract.sendToExchange("abc", 123, 10, {from: owner})
+    .then((txn) => {
+      return contract.decryptAndSend("abc", 123, {from: exchangeAddress})
+    });
   });
 
-  it("should be able get balances", function() {
+  it("should be able get balances", () => {
 
   });
 });

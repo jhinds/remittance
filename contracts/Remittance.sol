@@ -8,23 +8,25 @@ contract Remittance {
 
     uint public deadline;
     uint public deadlineLimit;
+    // try to handle flat rate or percentage
     uint public fee;
 
     mapping(bytes32 => uint) public accounts;
 
-    function Remittance(address _exchangeAddress, address _endRecipent) {
+    function Remittance(address _exchangeAddress, address _endRecipent, uint _fee) {
       owner = msg.sender;
       exchangeAddress = _exchangeAddress;
       endRecipent = _endRecipent;
+      fee = _fee;
     }
 
-    event MoneySentToExchange();
-    event MoneyConverted();
-    event MoneyLeavingExhange();
+    event MoneySentToExchange(address sender, address exhange, uint amount);
+    event MoneyTakenOutOfExchange(address exchange, address recipent, uint amount);
     event DeadlinePassed();
 
     function deadlinePassed() returns (bool) {
       if (deadline > block.number) {
+        DeadlinePassed();
         return true;
       } else {
         return false;
@@ -37,23 +39,16 @@ contract Remittance {
       deadline = _deadline;
       bytes32 hash = keccak256(exchangeAddress, password1, password2);
       accounts[hash] = msg.value;
-      MoneySentToExchange();
+      MoneySentToExchange(msg.sender, exchangeAddress, msg.value);
     }
 
     function decryptAndSend(bytes32 password1, bytes32 password2) {
       require(msg.sender == exchangeAddress);
       bytes32 hash = keccak256(exchangeAddress, password1, password2);
-      endRecipent.transfer(accounts[hash] - fee);
+      uint amount = accounts[hash];
+      endRecipent.transfer(amount - fee);
       exchangeAddress.transfer(fee);
+      MoneyTakenOutOfExchange(exchangeAddress, endRecipent, amount);
     }
 
-    function toBytes(address a) constant returns (bytes b){
-     assembly {
-          let m := mload(0x40)
-          mstore(add(m, 20), xor(0x140000000000000000000000000000000000000000, a))
-          mstore(0x40, add(m, 52))
-          b := m
-     }
-}
-
-}
+ }

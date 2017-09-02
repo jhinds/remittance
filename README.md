@@ -1,4 +1,14 @@
-# REMITTANCE
+# remittance
+
+## usage
+To run:
+- `testrpc`
+- `truffle migrate --reset`
+To test:
+- `truffle test`
+
+
+## assignment
 
 You will create a smart contract named Remittance whereby:
 
