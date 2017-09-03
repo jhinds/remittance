@@ -6,12 +6,11 @@ contract Remittance {
     address public exchangeAddress;
     address public endRecipent;
 
-    uint public deadline;
-    uint public deadlineLimit;
     // try to handle flat rate or percentage
     uint public fee;
 
     mapping(bytes32 => uint) public accounts;
+    mapping(address => uint) public unhashedAccounts;
 
     function Remittance(address _exchangeAddress, address _endRecipent, uint _fee) {
       owner = msg.sender;
@@ -21,34 +20,38 @@ contract Remittance {
     }
 
     event MoneySentToExchange(address sender, address exhange, uint amount);
-    event MoneyTakenOutOfExchange(address exchange, address recipent, uint amount);
-    event DeadlinePassed();
+    event DecryptedFunds(address exchange, address recipent, uint decrytpedFunds, uint feesClaimed);
+    event ContractKilled();
 
-    function deadlinePassed() returns (bool) {
-      if (deadline > block.number) {
-        DeadlinePassed();
-        return true;
-      } else {
-        return false;
-      }
-    }
-
-    function sendToExchange(bytes32 password1, bytes32 password2, uint _deadline) payable {
+    function sendToExchange(string password1, string password2) payable returns (uint amountSent) {
       require(msg.sender == owner);
-      require(deadlineLimit <= _deadline);
-      deadline = _deadline;
       bytes32 hash = keccak256(exchangeAddress, password1, password2);
       accounts[hash] = msg.value;
       MoneySentToExchange(msg.sender, exchangeAddress, msg.value);
+      return msg.value;
     }
 
-    function decryptAndSend(bytes32 password1, bytes32 password2) {
+    function decryptAccounts(string password1, string password2) returns (uint amountDecrypted) {
       require(msg.sender == exchangeAddress);
-      bytes32 hash = keccak256(exchangeAddress, password1, password2);
+      bytes32 hash = keccak256(msg.sender, password1, password2);
       uint amount = accounts[hash];
-      endRecipent.transfer(amount - fee);
-      exchangeAddress.transfer(fee);
-      MoneyTakenOutOfExchange(exchangeAddress, endRecipent, amount);
+      accounts[hash] = 0;
+      unhashedAccounts[endRecipent] = amount - fee;
+      unhashedAccounts[exchangeAddress] = fee;
+      DecryptedFunds(exchangeAddress, endRecipent, unhashedAccounts[endRecipent], unhashedAccounts[exchangeAddress]);
+      return amount;
+    }
+
+    function withdraw() {
+      msg.sender.transfer(unhashedAccounts[msg.sender]);
+    }
+
+    // to kill the contract
+    function killContract() returns (bool){
+      require(msg.sender == owner);
+      suicide(owner);
+      ContractKilled();
+      return true;
     }
 
  }
