@@ -23,17 +23,17 @@ contract Remittance {
     event DecryptedFunds(address exchange, address recipent, uint decrytpedFunds, uint feesClaimed);
     event ContractKilled();
 
-    function sendToExchange(string password1, string password2) payable returns (uint amountSent) {
+    // client needs to calculate hash "bytes32 hash = keccak256(exchangeAddress, password1, password2);"
+    function sendToExchange(bytes32 hash) payable returns (uint amountSent) {
       require(msg.sender == owner);
-      bytes32 hash = keccak256(exchangeAddress, password1, password2);
       accounts[hash] = msg.value;
       MoneySentToExchange(msg.sender, exchangeAddress, msg.value);
       return msg.value;
     }
 
-    function decryptAccounts(string password1, string password2) returns (uint amountDecrypted) {
+    // client needs to calculate hash "bytes32 hash = keccak256(exchangeAddress, password1, password2);"
+    function decryptAccounts(bytes32 hash) returns (uint amountDecrypted) {
       require(msg.sender == exchangeAddress);
-      bytes32 hash = keccak256(msg.sender, password1, password2);
       uint amount = accounts[hash];
       accounts[hash] = 0;
       unhashedAccounts[endRecipent] = amount - fee;
